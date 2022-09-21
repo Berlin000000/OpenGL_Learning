@@ -52,5 +52,6 @@ glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
   <li>pointer指的是每个属性在顶点中的stride。</li>
   </ol>
   
-  ## P6 How Shaders Work in OpemGL
-  
+## P6 How Shaders Work in OpemGL
+shader是一块运行在GPU上的代码（需要利用GPU的性能去实现绘制），not like 一般c++程序运行在CPU上，或者是过程运行在CPU上，将结果数据发给GPU。  
+OpenGL pipeline：在CPU上写了一堆数据，绑定某些状态、发出调用给GPU，GPU的shaders处理调用并开始在屏幕上绘制（即着色阶段，通常分别经过顶点着色器和片段着色器）。
