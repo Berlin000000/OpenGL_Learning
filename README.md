@@ -55,3 +55,89 @@ glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 ## P6 How Shaders Work in OpemGL
 shader是一块运行在GPU上的代码（需要利用GPU的性能去实现绘制），not like 一般c++程序运行在CPU上，或者是过程运行在CPU上，将结果数据发给GPU。  
 OpenGL pipeline：在CPU上写了一堆数据，绑定某些状态、发出调用给GPU，GPU的shaders处理调用并开始在屏幕上绘制（即着色阶段，通常分别经过顶点着色器和片段着色器）。
+
+## P7 Write a Shader
+这里有一个小tip，“stack由系统自动分配，系统收回；heap需要程序员自己申请，C中用函数malloc分配空间，用free释放，C++用new分配，用delete释放。”通常我们需要在栈上开辟一个数组  
+~~~
+char message[length];
+~~~
+这种写法会报错，因为length为变量  
+~~~
+char* message = new [length];//在堆上创建，并将其指定为唯一指针；或稍后删除掉..
+//使用alloca可以在堆栈上动态分配内存  
+char* message = (char*)alloca(length * sizeof(char));
+~~~  
+以string的形式编写shader  
+~~~
+string vertexShader =
+	"#version 330 core\n"
+	"\n"
+	"layout(location=0) in vec4 position;\n"//属性position标识为0，将position声明为一个输入顶点属性
+	"\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = position;\n"
+	"}\n";
+string fragmentShader =
+	"#version 330 core\n"
+	"\n"
+	"layout(location=0) out vec4 color;"
+	"\n"
+	"void main()\n"
+	"{\n"
+	"	color = vec4(1.0, 0.0, 0.0, 1.0);\n"
+	"}\n";
+~~~  
+
+## P8 处理着色器的方式
+创建资源文件Basic.shader，将着色器代码写在文件中，以#shader vertex等为节点进行区分。定义读入、解析shader文件的函数：
+~~~  
+struct ShaderProgramSource {//一种用于多个返回值的方式
+	string VertexSource;
+	string FragmentSource;
+};
+
+static ShaderProgramSource ParseShader(const string& filepath) {
+	ifstream stream(filepath);
+
+	enum class ShaderType {//相对于传统enum 限定作用域，不再支持隐式转换
+		NONE = -1, VERTEX = 0, FRAGMENT = 1
+	};
+
+	string line;
+	stringstream ss[2];//用于存储两个shader的stringstream
+	ShaderType type = ShaderType::NONE;
+	while (getline(stream,line))
+	{
+		if (line.find("#shader") != string::npos) {//npos表示无效的字符串位置（这个写法真的优雅ww
+			if (line.find("vertex") != string::npos) {
+				type = ShaderType::VERTEX;
+			}
+			else if (line.find("fragment") != string::npos) {
+				type = ShaderType::FRAGMENT;
+			}
+		}
+		else
+		{
+			ss[(int)type] << line << "\n";
+		}
+	}
+
+	return { ss[0].str(),ss[1].str() };
+}
+~~~
+## P9 索引缓冲区  
+解决重复顶点内存利用的问题，类似顶点缓冲区对象的定义与绑定：  
+~~~  
+unsigned int indices[] = {
+		0, 1, 2,
+		2, 3, 0
+	};
+unsigned int ibo;//索引缓冲区对象
+glGenBuffers(1, &ibo);//会返回待处理对象的整数id
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+//绘制函数改为glDrawElements，这个函数使用频率很高
+~~~
