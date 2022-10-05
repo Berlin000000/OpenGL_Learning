@@ -12,3 +12,5 @@ virtual void paintGL();
 a. 标准化设备坐标（取值范围 -1.0~1.0） 
 b. VAO存储数据的结构定义，VBO则存储不同的缓冲状态类型（可切换）。VAO记录的是一次绘制中所需要的信息，这包括“数据在哪里glBindBuffer”、“数据的格式是怎么样的glVertexAttribPointer”、shader-attribute的location的启用glEnableVertexAttribArray。  
 ![image](https://user-images.githubusercontent.com/48549786/193452736-9c6cc0b3-05bc-438e-96b2-c0e8368eef75.png)
+
+## 3. 使用QOpenGLShaderProgram类对shader的创建与使用做封装  
